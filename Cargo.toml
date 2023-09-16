@@ -1,0 +1,21 @@
+[package]
+name = "bubblehearth"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+documentation = "https://docs.rs/bubblehearth"
+homepage = "https://github.com/joeymckenzie/bubblehearth/"
+repository = "https://github.com/joeymckenzie/bubblehearth/"
+authors = ["Joey McKenzie <joey.mckenzie27@gmail.com>"]
+keywords = ["blizzard", "blizzard-api", "blizzard-game-data"]
+categories = ["api-bindings"]
+readme = "README.md"
+description = "Blizzard Game Data API bindings for Rust."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = "0.11"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
