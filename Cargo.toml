@@ -16,6 +16,11 @@ description = "Blizzard Game Data API bindings for Rust."
 
 [dependencies]
 reqwest = "0.11"
+thiserror = "1"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
+
+[[example]]
+name = "simple"
+path = "examples/with_simple_client.rs"

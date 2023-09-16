@@ -14,6 +14,7 @@
 )]
 
 pub mod client;
-pub mod http;
+pub mod errors;
+mod http;
 pub mod oauth;
 pub mod regionality;

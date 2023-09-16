@@ -10,7 +10,7 @@ const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 #[derive(Debug, Clone)]
 pub struct InternalHttpClient {
     /// Internal reqwest client for making HTTP requests.
-    pub http: reqwest::Client,
+    http: reqwest::Client,
     /// Region all API calls should target.
     regionality: AccountRegion,
 }
@@ -27,6 +27,45 @@ impl InternalHttpClient {
         Self {
             http: client,
             regionality,
+        }
+    }
+}
+
+/// A client builder with configurable HTTP options.
+#[derive(Debug, Clone)]
+pub struct InternalHttpClientBuilder {
+    /// Internal client instance to be configured.
+    client: InternalHttpClient,
+    /// Optional configurable timeout.
+    timeout: Option<Duration>,
+    /// Required account region for targeting the correct set of Blizzard APIs.
+    regionality: AccountRegion,
+}
+
+impl InternalHttpClientBuilder {
+    /// Constructs a new client builder instances with default options mirroring the default client.
+    pub fn new() -> Self {
+        let default_region = AccountRegion::US;
+        Self {
+            client: InternalHttpClient::new(default_region),
+            timeout: Some(Duration::from_secs(DEFAULT_TIMEOUT_SECONDS.into())),
+            regionality: default_region,
+        }
+    }
+
+    /// Sets the timeout on the internal client.
+    pub fn timeout(self, duration: Duration) -> Self {
+        Self {
+            timeout: Some(duration),
+            ..self
+        }
+    }
+
+    /// Sets the region on the internal client.
+    pub fn region(self, region: AccountRegion) -> Self {
+        Self {
+            regionality: region,
+            ..self
         }
     }
 }
