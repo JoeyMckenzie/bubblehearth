@@ -3,69 +3,78 @@
 
 use std::time::Duration;
 
-use crate::errors::{BubbleHearthError, BubbleHearthResult};
-use crate::http::reqwest::InternalHttpClient;
+use crate::auth_context::AuthenticationContext;
+use crate::errors::BubbleHearthResult;
+use crate::oauth::AccessTokenResponse;
 use crate::regionality::AccountRegion;
 
-const DEFAULT_TIMEOUT_DURATION_SECONDS: u8 = 5;
-
-/// Fluent builder for configuring the top-level Blizzard client.
-#[derive(Debug, Clone)]
-pub struct BubbleHearthClientBuilder {
-    /// Client to be constructed, requiring at least a region to be configured.
-    client: Option<BubbleHearthClient>,
-    /// Optional configurable timeout for the internal client, defaulting if not provided.
-    timeout: Option<Duration>,
-    /// Optionally configuration account region, though required on construction.
-    region: Option<AccountRegion>,
-}
-
-/// Configuration options for the internal HTTP client.
-#[derive(Debug, Copy, Clone)]
-pub struct BubbleHearthClientOptions {
-    /// Optional configurable timeout for the internal client, defaulting if not provided.
-    timeout: Option<Duration>,
-}
+const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 
 /// The primary BubbleHearth client, acting as the gateway for connecting
 #[derive(Debug, Clone)]
 pub struct BubbleHearthClient {
+    /// Client ID provided by Blizzard's developer portal.
+    client_id: String,
+    /// Client secret provided by Blizzard's developer portal.
+    client_secret: String,
     /// Internal HTTP client for sending requests to various Blizzard APIs.
-    internal_client: InternalHttpClient,
+    http: reqwest::Client,
+    /// Required account region.
+    region: AccountRegion,
+    /// Current authentication context allowing for reuse of access tokens.
+    pub authentication: Option<AuthenticationContext>,
 }
 
 impl BubbleHearthClient {
     /// Constructs a new client with default configuration options, though requiring a region.
-    pub fn new(region: AccountRegion) -> Self {
-        let internal_client = InternalHttpClient::new(region);
-        Self { internal_client }
+    pub fn new(client_id: String, client_secret: String, region: AccountRegion) -> Self {
+        let default_timeout = Duration::from_secs(DEFAULT_TIMEOUT_SECONDS.into());
+        Self::new_with_timeout(client_id, client_secret, region, default_timeout)
     }
-}
 
-impl Default for BubbleHearthClientBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+    /// Constructs a new client instance with a configurable timeout.
+    pub fn new_with_timeout(
+        client_id: String,
+        client_secret: String,
+        region: AccountRegion,
+        timeout: Duration,
+    ) -> Self {
+        let client = reqwest::ClientBuilder::new()
+            .timeout(timeout)
+            .build()
+            .unwrap();
 
-impl BubbleHearthClientBuilder {
-    /// Constructs a new client builder instance with default options.
-    pub fn new() -> Self {
         Self {
-            client: None,
-            timeout: None,
-            region: None,
+            client_id,
+            client_secret,
+            http: client,
+            region,
+            authentication: None,
         }
     }
 
-    /// Attempts to construct a client instance, checking for a required account region.
-    pub fn build(self) -> BubbleHearthResult<BubbleHearthClient> {
-        match self.region {
-            None => Err(BubbleHearthError::RegionRequired),
-            Some(_) => match self.client {
-                None => Err(BubbleHearthError::ClientInstanceRequired),
-                Some(client) => Ok(client),
-            },
+    /// Requests a raw access token for authenticating against all client requests.
+    /// Upon retrieval, access tokens are cached within client unless explicitly flushed.
+    pub async fn get_access_token(&mut self) -> BubbleHearthResult<String> {
+        if let Some(auth_context) = &self.authentication {
+            return Ok(auth_context.get_access_token());
         }
+
+        let form = reqwest::multipart::Form::new().text("grant_type", "client_credentials");
+        let token_response = self
+            .http
+            .post(self.region.get_token_endpoint())
+            .multipart(form)
+            .basic_auth(&self.client_id, Some(&self.client_secret))
+            .send()
+            .await?
+            .json::<AccessTokenResponse>()
+            .await?;
+
+        let current_auth_context = AuthenticationContext::new(token_response);
+        let current_token = current_auth_context.get_access_token();
+        self.authentication = Some(current_auth_context);
+
+        Ok(current_token)
     }
 }

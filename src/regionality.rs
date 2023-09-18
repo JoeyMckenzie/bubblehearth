@@ -1,5 +1,17 @@
 //! Region-based metadata for targeting specific instances of the Blizzard APIs.
 
+/// Authorize endpoint for global regionalities.
+pub const GLOBAL_AUTHORIZE_ENDPOINT: &str = "https://oauth.battle.net/authorize";
+
+/// Token endpoint for global regionalities.
+pub const GLOBAL_TOKEN_ENDPOINT: &str = "https://oauth.battle.net/token";
+
+/// Authorize endpoint for the China regionality.
+pub const CN_AUTHORIZE_ENDPOINT: &str = "https://oauth.battlenet.com.cn/authorize";
+
+/// Authorize endpoint for China regionality.
+pub const CN_TOKEN_ENDPOINT: &str = "https://oauth.battlenet.com.cn/token";
+
 /// Regions associated to their corresponding API gateways.
 #[derive(Debug, Clone, Copy)]
 pub enum AccountRegion {
@@ -13,4 +25,14 @@ pub enum AccountRegion {
     KR,
     /// Represents the Taiwan States region and Global API gateway.
     TW,
+}
+
+impl AccountRegion {
+    /// Determines the appropriate token endpoint based on the client region.
+    pub fn get_token_endpoint(&self) -> &str {
+        match self {
+            AccountRegion::CN => CN_AUTHORIZE_ENDPOINT,
+            _ => GLOBAL_TOKEN_ENDPOINT,
+        }
+    }
 }
