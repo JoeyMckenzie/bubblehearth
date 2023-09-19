@@ -18,4 +18,10 @@ pub enum BubbleHearthError {
     /// Represents any reqwest that has failed, propagating the error context.
     #[error("{0}")]
     ClientRequestFailed(#[from] reqwest::Error),
+    /// Represents an error that occurred attempting to retrieve a cached access token.
+    #[error("No available access token was found.")]
+    AccessTokenNotFound,
+    /// Represents an error that occurred attempting to determine if refresh of a token is needed.
+    #[error("No expiration was found associated to the current authentication context.")]
+    ExpirationNotFound,
 }

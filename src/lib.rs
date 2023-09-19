@@ -13,8 +13,8 @@
     clippy::single_char_pattern
 )]
 
-mod auth_context;
+mod auth;
+pub mod classic;
 pub mod client;
 pub mod errors;
-pub mod oauth;
 pub mod regionality;

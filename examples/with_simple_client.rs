@@ -9,7 +9,7 @@ async fn main() {
     let client_secret =
         std::env::var("CLIENT_SECRET").expect("client secret not found within the environment");
 
-    let mut client = BubbleHearthClient::new(client_id, client_secret, AccountRegion::US);
+    let client = BubbleHearthClient::new(client_id, client_secret, AccountRegion::US);
     let token = client
         .get_access_token()
         .await

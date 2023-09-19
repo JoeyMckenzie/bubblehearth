@@ -9,7 +9,7 @@ repos:
     rev: v1.0
     hooks:
       - id: fmt
-      # - id: clippy
+      - id: clippy
   - repo: https://github.com/crate-ci/committed
     rev: v1.0.18
     hooks:

@@ -1,19 +1,40 @@
 //! A top-level client client for interacting with Blizzard Game Data APIs,
 //! including authentication and all publicly available APIs for Blizzard games.
 
-use std::ops::Add;
+use std::sync::Mutex;
 use std::time::Duration;
 
-use time::OffsetDateTime;
-
+use crate::auth::{AccessTokenResponse, AuthenticationContext};
 use crate::errors::BubbleHearthResult;
-use crate::oauth::AccessTokenResponse;
 use crate::regionality::AccountRegion;
 
 const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 
-/// The primary BubbleHearth client, acting as the gateway for connecting
-#[derive(Debug, Clone)]
+/// The primary BubbleHearth client, acting as the gateway for connecting.
+///
+/// ```rust
+/// use std::time::Duration;
+/// use bubblehearth::client::BubbleHearthClient;
+/// use bubblehearth::regionality::AccountRegion;
+///
+/// #[tokio::main]
+/// async fn main() {
+///     dotenvy::dotenv().expect("test client credentials unable to load");
+///     let client_id = std::env::var("CLIENT_ID").expect("test client ID not found");
+///     let client_secret = std::env::var("CLIENT_SECRET").expect("test client secret not found");
+///     let client = BubbleHearthClient::new_with_timeout(
+///         client_id,
+///         client_secret,
+///         AccountRegion::US,
+///         Duration::from_secs(30),
+///     );
+///
+///     // Retrieve an access token, with successive retrievals returning the cached token
+///     let token = client.get_access_token().await.unwrap();
+///     let cached_token = client.get_access_token().await.unwrap();
+///     assert_eq!(token, cached_token);
+/// }
+#[derive(Debug)]
 pub struct BubbleHearthClient {
     /// Client ID provided by Blizzard's developer portal.
     client_id: String,
@@ -23,10 +44,8 @@ pub struct BubbleHearthClient {
     http: reqwest::Client,
     /// Required account region.
     region: AccountRegion,
-    /// Current access token used to authenticate against Blizzard APIs.
-    access_token: Option<String>,
-    /// Expiration of the access token, typically on the order of 24 hours.
-    expires_at: Option<OffsetDateTime>,
+    /// Internally cached authentication context, allowing for token reuse and smart refreshing.
+    authentication: Mutex<AuthenticationContext>,
 }
 
 impl BubbleHearthClient {
@@ -53,16 +72,20 @@ impl BubbleHearthClient {
             client_secret,
             http: client,
             region,
-            access_token: None,
-            expires_at: None,
+            authentication: Mutex::new(AuthenticationContext::new(None)),
         }
     }
 
     /// Requests a raw access token for authenticating against all client requests.
     /// Upon retrieval, access tokens are cached within client unless explicitly flushed.
-    pub async fn get_access_token(&mut self) -> BubbleHearthResult<String> {
-        if let Some(auth_context) = &self.access_token {
-            return Ok(auth_context.clone());
+    pub async fn get_access_token(&self) -> BubbleHearthResult<String> {
+        if let Ok(lock) = self.authentication.try_lock() {
+            // If we have an existing access token, return it and skip the call to retrieve a new one
+            if lock.try_refresh_required().unwrap_or(false) {
+                if let Ok(token) = lock.try_access_token() {
+                    return Ok(token);
+                }
+            }
         }
 
         let form = reqwest::multipart::Form::new().text("grant_type", "client_credentials");
@@ -76,12 +99,12 @@ impl BubbleHearthClient {
             .json::<AccessTokenResponse>()
             .await?;
 
-        let expires_in = token_response.expires_in;
-        let access_token = token_response.access_token;
-        let expires_in_duration = Duration::from_secs(expires_in);
-        let expires_at = OffsetDateTime::now_utc().add(expires_in_duration);
-        self.access_token = Some(access_token.clone());
-        self.expires_at = Some(expires_at);
+        // TODO: Probably don't want to clone here, figure it out later
+        let access_token = token_response.access_token.clone();
+
+        if let Ok(mut lock) = self.authentication.try_lock() {
+            *lock = AuthenticationContext::new(Some(token_response))
+        }
 
         Ok(access_token)
     }
