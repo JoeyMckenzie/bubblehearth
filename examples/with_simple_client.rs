@@ -15,7 +15,4 @@ async fn main() {
         .await
         .expect("access token was unable to be retrieved");
     dbg!(token);
-
-    let refresh_required = client.authentication.unwrap().refresh_required();
-    dbg!(refresh_required);
 }

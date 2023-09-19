@@ -1,9 +1,11 @@
 //! A top-level client client for interacting with Blizzard Game Data APIs,
 //! including authentication and all publicly available APIs for Blizzard games.
 
+use std::ops::Add;
 use std::time::Duration;
 
-use crate::auth_context::AuthenticationContext;
+use time::OffsetDateTime;
+
 use crate::errors::BubbleHearthResult;
 use crate::oauth::AccessTokenResponse;
 use crate::regionality::AccountRegion;
@@ -21,8 +23,10 @@ pub struct BubbleHearthClient {
     http: reqwest::Client,
     /// Required account region.
     region: AccountRegion,
-    /// Current authentication context allowing for reuse of access tokens.
-    pub authentication: Option<AuthenticationContext>,
+    /// Current access token used to authenticate against Blizzard APIs.
+    access_token: Option<String>,
+    /// Expiration of the access token, typically on the order of 24 hours.
+    expires_at: Option<OffsetDateTime>,
 }
 
 impl BubbleHearthClient {
@@ -49,15 +53,16 @@ impl BubbleHearthClient {
             client_secret,
             http: client,
             region,
-            authentication: None,
+            access_token: None,
+            expires_at: None,
         }
     }
 
     /// Requests a raw access token for authenticating against all client requests.
     /// Upon retrieval, access tokens are cached within client unless explicitly flushed.
     pub async fn get_access_token(&mut self) -> BubbleHearthResult<String> {
-        if let Some(auth_context) = &self.authentication {
-            return Ok(auth_context.get_access_token());
+        if let Some(auth_context) = &self.access_token {
+            return Ok(auth_context.clone());
         }
 
         let form = reqwest::multipart::Form::new().text("grant_type", "client_credentials");
@@ -71,10 +76,13 @@ impl BubbleHearthClient {
             .json::<AccessTokenResponse>()
             .await?;
 
-        let current_auth_context = AuthenticationContext::new(token_response);
-        let current_token = current_auth_context.get_access_token();
-        self.authentication = Some(current_auth_context);
+        let expires_in = token_response.expires_in;
+        let access_token = token_response.access_token;
+        let expires_in_duration = Duration::from_secs(expires_in);
+        let expires_at = OffsetDateTime::now_utc().add(expires_in_duration);
+        self.access_token = Some(access_token.clone());
+        self.expires_at = Some(expires_at);
 
-        Ok(current_token)
+        Ok(access_token)
     }
 }
