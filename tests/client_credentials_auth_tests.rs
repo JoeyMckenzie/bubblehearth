@@ -10,7 +10,7 @@ async fn returns_access_token_given_proper_credentials() {
     let client = BubbleHearthClient::new(client_id, client_secret, AccountRegion::US);
 
     // act
-    let token = client.get_access_token().await;
+    let token = client.authentication.get_access_token().await;
 
     // assert
     assert!(token.is_ok());
@@ -26,8 +26,8 @@ async fn returns_cached_access_token_when_multiple_calls_outgoing() {
     let client = BubbleHearthClient::new(client_id, client_secret, AccountRegion::US);
 
     // act, get the first token and verify it's the cached token the second time around
-    let token = client.get_access_token().await.unwrap();
-    let cached_token = client.get_access_token().await.unwrap();
+    let token = client.authentication.get_access_token().await.unwrap();
+    let cached_token = client.authentication.get_access_token().await.unwrap();
 
     // assert
     assert_eq!(token, cached_token);
@@ -44,7 +44,7 @@ async fn returns_error_when_credentials_invalid() {
     );
 
     // act
-    let token = client.get_access_token().await;
+    let token = client.authentication.get_access_token().await;
 
     // assert
     assert!(token.is_err());
