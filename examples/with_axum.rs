@@ -5,9 +5,7 @@ use axum::Router;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
-use bubblehearth::classic::client::WorldOfWarcraftClassicClient;
 use bubblehearth::client::BubbleHearthClient;
-use bubblehearth::errors::BubbleHearthResult;
 use bubblehearth::regionality::AccountRegion;
 
 struct AppState {

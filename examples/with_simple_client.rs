@@ -17,6 +17,5 @@ async fn main() {
         .await
         .expect("access token was unable to be retrieved");
 
-    let classic_items = client.classic.get_realms(Locale::EnglishUS).await;
-    dbg!(token);
+    client.classic.get_realms(Locale::EnglishUS).await.ok();
 }
