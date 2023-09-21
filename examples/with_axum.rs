@@ -5,11 +5,11 @@ use axum::Router;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
-use bubblehearth::client::BubbleHearthClient;
+use bubblehearth::classic::client::WorldOfWarcraftClassicClient;
 use bubblehearth::regionality::AccountRegion;
 
 struct AppState {
-    client: BubbleHearthClient,
+    client: WorldOfWarcraftClassicClient,
 }
 
 #[tokio::main]
@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     info!("initializing application routes");
 
     let app_state = AppState {
-        client: BubbleHearthClient::new(client_id, client_secret, AccountRegion::US),
+        client: WorldOfWarcraftClassicClient::new(client_id, client_secret, AccountRegion::US),
     };
 
     let port = 8000_u16;

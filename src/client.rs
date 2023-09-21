@@ -1,10 +1,11 @@
 //! A top-level client client for interacting with Blizzard Game Data APIs,
 //! including authentication and all publicly available APIs for Blizzard games.
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use crate::auth::{AccessTokenResponse, AuthenticationContext};
+use crate::classic::client::WorldOfWarcraftClassicClient;
 use crate::errors::BubbleHearthResult;
 use crate::regionality::AccountRegion;
 
@@ -41,11 +42,13 @@ pub struct BubbleHearthClient {
     /// Client secret provided by Blizzard's developer portal.
     client_secret: String,
     /// Internal HTTP client for sending requests to various Blizzard APIs.
-    http: reqwest::Client,
+    http: Arc<reqwest::Client>,
     /// Required account region.
     region: AccountRegion,
     /// Internally cached authentication context, allowing for token reuse and smart refreshing.
-    authentication: Mutex<AuthenticationContext>,
+    authentication: Arc<Mutex<AuthenticationContext>>,
+    /// A client for querying World of Warcraft Classic game data.
+    pub classic: WorldOfWarcraftClassicClient,
 }
 
 impl BubbleHearthClient {
@@ -66,13 +69,16 @@ impl BubbleHearthClient {
             .timeout(timeout)
             .build()
             .unwrap();
+        let ref_client = Arc::new(client);
+        let ref_authentication = Arc::new(Mutex::new(AuthenticationContext::new(None)));
 
         Self {
             client_id,
             client_secret,
-            http: client,
+            http: ref_client.clone(),
             region,
-            authentication: Mutex::new(AuthenticationContext::new(None)),
+            authentication: ref_authentication.clone(),
+            classic: WorldOfWarcraftClassicClient::new(ref_client, region, ref_authentication),
         }
     }
 

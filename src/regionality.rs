@@ -35,4 +35,14 @@ impl AccountRegion {
             _ => GLOBAL_TOKEN_ENDPOINT,
         }
     }
+
+    pub fn get_region_prefix(&self) -> &str {
+        match self {
+            AccountRegion::CN => "cn",
+            AccountRegion::US => "us",
+            AccountRegion::EU => "eu",
+            AccountRegion::KR => "kr",
+            AccountRegion::TW => "tw",
+        }
+    }
 }

@@ -14,5 +14,6 @@ async fn main() {
         .get_access_token()
         .await
         .expect("access token was unable to be retrieved");
+    let classic_items = client.classic;
     dbg!(token);
 }

@@ -17,4 +17,5 @@ mod auth;
 pub mod classic;
 pub mod client;
 pub mod errors;
+pub mod localization;
 pub mod regionality;
