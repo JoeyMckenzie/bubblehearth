@@ -30,8 +30,8 @@ const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 ///     );
 ///
 ///     // Retrieve an access token, with successive retrievals returning the cached token
-///     let token = client.get_access_token().await.unwrap();
-///     let cached_token = client.get_access_token().await.unwrap();
+///     let token = client.authentication.get_access_token().await.unwrap();
+///     let cached_token = client.authentication.get_access_token().await.unwrap();
 ///     assert_eq!(token, cached_token);
 /// }
 #[derive(Debug)]
