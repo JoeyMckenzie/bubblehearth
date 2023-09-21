@@ -2,10 +2,12 @@
 
 //! Client connectors to the World of Warcraft Classic Game Data APIs.
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+
 use reqwest::header::HeaderMap;
 
 use crate::auth::AuthenticationContext;
+use crate::errors::BubbleHearthResult;
 use crate::localization::Locale;
 use crate::regionality::AccountRegion;
 
@@ -18,8 +20,8 @@ pub struct WorldOfWarcraftClassicClient {
     http: Arc<reqwest::Client>,
     /// Configured account region.
     region: AccountRegion,
-    /// Referenced to the cached authentication context.
-    authentication: Arc<Mutex<AuthenticationContext>>,
+    /// Internally cached authentication context, allowing for token reuse and smart refreshing.
+    authentication: Arc<AuthenticationContext>,
 }
 
 impl WorldOfWarcraftClassicClient {
@@ -27,7 +29,7 @@ impl WorldOfWarcraftClassicClient {
     pub fn new(
         http: Arc<reqwest::Client>,
         region: AccountRegion,
-        authentication: Arc<Mutex<AuthenticationContext>>,
+        authentication: Arc<AuthenticationContext>,
     ) -> Self {
         Self {
             http,
@@ -37,16 +39,29 @@ impl WorldOfWarcraftClassicClient {
     }
 
     /// Retrieves data about all available realms.
-    pub async fn get_realms(&self, locale: Locale) {
+    pub async fn get_realms(&self, locale: Locale) -> BubbleHearthResult<()> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/realm/index?locale={}",
-            self.region.get_region_prefix(),
+            self.region.get_region_abbreviation(),
             locale.get_locale(),
         );
 
+        let token = self.authentication.get_access_token().await?;
         let mut headers = HeaderMap::new();
         headers.append("Battlenet-Namespace", NAMESPACE.parse().unwrap());
         headers.append("Access", NAMESPACE.parse().unwrap());
-        let realms = self.http.get(url).headers(headers).bearer_auth(self.authentication)
+        let realms = self
+            .http
+            .get(url)
+            .headers(headers)
+            .bearer_auth(token)
+            .send()
+            .await?
+            .json::<serde_json::Value>()
+            .await?;
+
+        dbg!(realms);
+
+        Ok(())
     }
 }

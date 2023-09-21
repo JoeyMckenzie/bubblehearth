@@ -1,4 +1,5 @@
 use bubblehearth::client::BubbleHearthClient;
+use bubblehearth::localization::Locale;
 use bubblehearth::regionality::AccountRegion;
 
 #[tokio::main]
@@ -11,9 +12,11 @@ async fn main() {
 
     let client = BubbleHearthClient::new(client_id, client_secret, AccountRegion::US);
     let token = client
+        .authentication
         .get_access_token()
         .await
         .expect("access token was unable to be retrieved");
-    let classic_items = client.classic;
+
+    let classic_items = client.classic.get_realms(Locale::EnglishUS).await;
     dbg!(token);
 }

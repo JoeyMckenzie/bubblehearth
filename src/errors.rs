@@ -24,4 +24,7 @@ pub enum BubbleHearthError {
     /// Represents an error that occurred attempting to determine if refresh of a token is needed.
     #[error("No expiration was found associated to the current authentication context.")]
     ExpirationNotFound,
+    /// Represents an error occurring when an internal mutex has failed to lock while determining authentication context.
+    #[error("{0}")]
+    AuthenticationLockFailed(String),
 }

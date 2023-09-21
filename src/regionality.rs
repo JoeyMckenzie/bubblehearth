@@ -36,7 +36,8 @@ impl AccountRegion {
         }
     }
 
-    pub fn get_region_prefix(&self) -> &str {
+    /// Gets the mapped region abbreviation used for determine which subdomain to send API requests to.
+    pub fn get_region_abbreviation(&self) -> &str {
         match self {
             AccountRegion::CN => "cn",
             AccountRegion::US => "us",

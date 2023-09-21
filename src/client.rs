@@ -1,12 +1,11 @@
 //! A top-level client client for interacting with Blizzard Game Data APIs,
 //! including authentication and all publicly available APIs for Blizzard games.
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
-use crate::auth::{AccessTokenResponse, AuthenticationContext};
+use crate::auth::AuthenticationContext;
 use crate::classic::client::WorldOfWarcraftClassicClient;
-use crate::errors::BubbleHearthResult;
 use crate::regionality::AccountRegion;
 
 const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
@@ -37,16 +36,8 @@ const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 /// }
 #[derive(Debug)]
 pub struct BubbleHearthClient {
-    /// Client ID provided by Blizzard's developer portal.
-    client_id: String,
-    /// Client secret provided by Blizzard's developer portal.
-    client_secret: String,
-    /// Internal HTTP client for sending requests to various Blizzard APIs.
-    http: Arc<reqwest::Client>,
-    /// Required account region.
-    region: AccountRegion,
     /// Internally cached authentication context, allowing for token reuse and smart refreshing.
-    authentication: Arc<Mutex<AuthenticationContext>>,
+    pub authentication: Arc<AuthenticationContext>,
     /// A client for querying World of Warcraft Classic game data.
     pub classic: WorldOfWarcraftClassicClient,
 }
@@ -70,48 +61,17 @@ impl BubbleHearthClient {
             .build()
             .unwrap();
         let ref_client = Arc::new(client);
-        let ref_authentication = Arc::new(Mutex::new(AuthenticationContext::new(None)));
+        let authentication = AuthenticationContext::new(
+            ref_client.clone(),
+            region,
+            client_id.clone(),
+            client_secret.clone(),
+        );
+        let ref_authentication = Arc::new(authentication);
 
         Self {
-            client_id,
-            client_secret,
-            http: ref_client.clone(),
-            region,
             authentication: ref_authentication.clone(),
             classic: WorldOfWarcraftClassicClient::new(ref_client, region, ref_authentication),
         }
-    }
-
-    /// Requests a raw access token for authenticating against all client requests.
-    /// Upon retrieval, access tokens are cached within client unless explicitly flushed.
-    pub async fn get_access_token(&self) -> BubbleHearthResult<String> {
-        if let Ok(lock) = self.authentication.try_lock() {
-            // If we have an existing access token, return it and skip the call to retrieve a new one
-            if lock.try_refresh_required().unwrap_or(false) {
-                if let Ok(token) = lock.try_access_token() {
-                    return Ok(token);
-                }
-            }
-        }
-
-        let form = reqwest::multipart::Form::new().text("grant_type", "client_credentials");
-        let token_response = self
-            .http
-            .post(self.region.get_token_endpoint())
-            .multipart(form)
-            .basic_auth(&self.client_id, Some(&self.client_secret))
-            .send()
-            .await?
-            .json::<AccessTokenResponse>()
-            .await?;
-
-        // TODO: Probably don't want to clone here, figure it out later
-        let access_token = token_response.access_token.clone();
-
-        if let Ok(mut lock) = self.authentication.try_lock() {
-            *lock = AuthenticationContext::new(Some(token_response))
-        }
-
-        Ok(access_token)
     }
 }
