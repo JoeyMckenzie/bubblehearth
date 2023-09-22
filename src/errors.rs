@@ -27,4 +27,7 @@ pub enum BubbleHearthError {
     /// Represents an error occurring when an internal mutex has failed to lock while determining authentication context.
     #[error("{0}")]
     AuthenticationLockFailed(String),
+    /// Represents an error occurring when determining a typed locale based on the locale returned from Blizzard.
+    #[error("Locale {0} is unknown.")]
+    LocaleUnknown(String),
 }

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::auth::AuthenticationContext;
-use crate::classic::client::WorldOfWarcraftClassicClient;
+use crate::classic::WorldOfWarcraftClassicClient;
 use crate::regionality::AccountRegion;
 
 const DEFAULT_TIMEOUT_SECONDS: u8 = 5;

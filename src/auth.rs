@@ -90,7 +90,6 @@ impl AuthenticationContext {
         }
 
         let form = reqwest::multipart::Form::new().text("grant_type", "client_credentials");
-
         let token_response = self
             .http
             .post(self.region.get_token_endpoint())

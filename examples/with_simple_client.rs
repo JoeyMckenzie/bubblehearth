@@ -11,11 +11,24 @@ async fn main() {
         std::env::var("CLIENT_SECRET").expect("client secret not found within the environment");
 
     let client = BubbleHearthClient::new(client_id, client_secret, AccountRegion::US);
+
+    // Get a list of World of Warcraft Classic realms
+    let realms = client.classic.get_realms(Locale::EnglishUS).await.unwrap();
+    dbg!(realms);
+
+    // Get an individual Classic realm
+    let realm = client
+        .classic
+        .get_realm("westfall".to_string(), None)
+        .await
+        .unwrap();
+    dbg!(realm);
+
+    // We can explicitly request access tokens, though the client will internally grab one from Blizzard and refresh as needed
+    // In the example above, we simply create a client connection and start sending requests
     let token = client
         .authentication
         .get_access_token()
         .await
         .expect("access token was unable to be retrieved");
-
-    client.classic.get_realms(Locale::EnglishUS).await.ok();
 }
