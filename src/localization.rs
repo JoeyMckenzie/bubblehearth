@@ -22,15 +22,6 @@ use serde_json::Value;
 
 use crate::errors::BubbleHearthError;
 
-/// A localization response model that can be deserialized as a string or struct.
-#[derive(Debug, Clone, PartialEq)]
-pub enum StringOrStructLocale {
-    /// String-based locale.
-    StringLocale(String),
-    /// Struct-map based locale.
-    StructLocale(Box<StructuredLocale>),
-}
-
 /// Localities supported by Blizzard's APIs.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Deserialize)]
 pub enum Locale {
@@ -158,6 +149,15 @@ impl FromStr for Locale {
     }
 }
 
+/// A localization response model that can be deserialized as a string or struct.
+#[derive(Debug, Clone, PartialEq)]
+pub enum StringOrStructLocale {
+    /// String-based locale.
+    StringLocale(String),
+    /// Struct-map based locale.
+    StructLocale(Box<StructuredLocale>),
+}
+
 /// Allows dynamic serialization based on the locale data returned from an item.
 /// For certain endpoints, Blizzard may return either a string for the locale
 /// or an object. Taking realms, as an example, when retrieving one or many
@@ -223,5 +223,106 @@ impl<'de> Deserialize<'de> for StringOrStructLocale {
             }
             _ => Err(serde::de::Error::custom("Invalid data type for locale.")),
         }
+    }
+}
+
+#[cfg(test)]
+mod localization_tests {
+    use crate::classic::realms::RealmsIndex;
+    use crate::localization::StringOrStructLocale::StructLocale;
+    use crate::localization::{StringOrStructLocale, StructuredLocale};
+
+    #[test]
+    fn serializes_correct_locale_string_when_single_locale_returned() {
+        // Arrange
+        let response = r#"
+            {
+              "_links": {
+                "self": {
+                  "href": "https://us.api.blizzard.com/data/wow/realm/?namespace=dynamic-classic-us"
+                }
+              },
+              "realms": [
+                {
+                  "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/realm/4372?namespace=dynamic-classic-us"
+                  },
+                  "name": "Atiesh",
+                  "id": 4372,
+                  "slug": "atiesh"
+                }
+              ]
+            }
+        "#;
+
+        // Act
+        let realms: RealmsIndex = serde_json::from_str(response).unwrap();
+        let realm = &realms.realms[0];
+
+        // Assert
+        assert_eq!(
+            realm.name,
+            StringOrStructLocale::StringLocale("Atiesh".to_string())
+        );
+    }
+
+    #[test]
+    fn serializes_correct_locale_struct_when_multiple_locales_returned() {
+        // Arrange
+        let response = r#"
+            {
+              "_links": {
+                "self": {
+                  "href": "https://us.api.blizzard.com/data/wow/realm/?namespace=dynamic-classic-us"
+                }
+              },
+              "realms": [
+                {
+                  "key": {
+                    "href": "https://us.api.blizzard.com/data/wow/realm/4372?namespace=dynamic-classic-us"
+                  },
+                  "name": {
+                    "en_US": "Atiesh",
+                    "es_MX": "Atiesh",
+                    "pt_BR": "Atiesh",
+                    "de_DE": "Atiesh",
+                    "en_GB": "Atiesh",
+                    "es_ES": "Atiesh",
+                    "fr_FR": "Atiesh",
+                    "it_IT": "Atiesh",
+                    "ru_RU": "Atiesh",
+                    "ko_KR": "Atiesh",
+                    "zh_TW": "阿泰絲",
+                    "zh_CN": "埃提耶什"
+                  },
+                  "id": 4372,
+                  "slug": "atiesh"
+                }
+              ]
+            }
+        "#;
+
+        // Act
+        let realms: RealmsIndex = serde_json::from_str(response).unwrap();
+        let realm = &realms.realms[0];
+
+        // Assert
+        assert_eq!(
+            realm.name,
+            StructLocale(Box::new(StructuredLocale {
+                en_us: "Atiesh".to_string(),
+                en_gb: "Atiesh".to_string(),
+                es_mx: "Atiesh".to_string(),
+                es_es: "Atiesh".to_string(),
+                pt_br: "Atiesh".to_string(),
+                de_de: "Atiesh".to_string(),
+                fr_fr: "Atiesh".to_string(),
+                it_it: "Atiesh".to_string(),
+                ru_ru: "Atiesh".to_string(),
+                ko_kr: "Atiesh".to_string(),
+                zh_tw: "阿泰絲".to_string(),
+                zh_cn: "埃提耶什".to_string(),
+            }))
+        );
     }
 }
