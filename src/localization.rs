@@ -217,7 +217,6 @@ impl<'de> Deserialize<'de> for StringOrStructLocale {
         match json_value {
             Value::String(s) => Ok(StringOrStructLocale::StringLocale(s)),
             Value::Object(_) => {
-                dbg!(&json_value);
                 let locale_struct: StructuredLocale = Deserialize::deserialize(json_value).unwrap();
                 Ok(StringOrStructLocale::StructLocale(Box::new(locale_struct)))
             }

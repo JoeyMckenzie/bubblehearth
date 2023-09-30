@@ -16,6 +16,9 @@
 mod auth;
 pub mod classic;
 pub mod client;
+mod documents;
 pub mod errors;
 pub mod localization;
 pub mod regionality;
+pub mod search;
+pub mod timezone;

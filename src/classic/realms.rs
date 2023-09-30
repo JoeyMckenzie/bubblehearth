@@ -5,8 +5,11 @@ use reqwest::StatusCode;
 use serde::Deserialize;
 
 use crate::classic::WorldOfWarcraftClassicClient;
+use crate::documents::{DocumentKey, Links};
 use crate::errors::BubbleHearthResult;
 use crate::localization::StringOrStructLocale;
+use crate::search::SearchResult;
+use crate::timezone::Timezone;
 
 /// Response structure from the realms index endpoint, listing all available realms
 /// with associated metadata like name, status, slug, etc.
@@ -19,15 +22,6 @@ pub struct RealmsIndex {
     pub realms: Vec<Realm>,
 }
 
-/// Self reference link for retrieving individual realm data. Not particularly useful,
-/// one should favor using the individual self ref for each realm instead.
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct Links {
-    /// Self reference link.
-    #[serde(rename = "self")]
-    pub self_ref: Key,
-}
-
 /// Realm metadata for all available World of Warcraft Classic servers.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Realm {
@@ -35,7 +29,7 @@ pub struct Realm {
     #[serde(rename = "_links")]
     pub links: Option<Links>,
     /// Document key for the realm, defaults to the URL.
-    pub key: Option<Key>,
+    pub key: Option<DocumentKey>,
     /// Localized realm name.
     pub name: StringOrStructLocale,
     /// Numeric Realm ID.
@@ -61,18 +55,11 @@ pub struct Realm {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct RealmRegion {
     /// Document key of the realm region.
-    pub key: Key,
+    pub key: Option<DocumentKey>,
     /// Name of the realm region.
     pub name: StringOrStructLocale,
     /// ID of the realm region.
     pub id: u64,
-}
-
-/// The greater connected realm data, housing multiple regional servers.
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct ConnectedRealm {
-    /// Document key of the realm region.
-    pub key: Key,
 }
 
 /// Realm type data, indicating PVP, PVE, Normal, etc.
@@ -83,13 +70,6 @@ pub struct RealmType {
     pub realm_type: String,
     /// Realm environment, i.e. PVP, PVE, etc.
     pub name: StringOrStructLocale,
-}
-
-/// A document key associated to all model responses from the Game Data APIs.
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct Key {
-    /// URL of the associated document.
-    pub href: String,
 }
 
 impl WorldOfWarcraftClassicClient {
@@ -126,7 +106,7 @@ impl WorldOfWarcraftClassicClient {
 
     /// Retrieves a realm's metadata based on the realm slug.
     pub async fn get_realm(&self, slug: String) -> BubbleHearthResult<Option<Realm>> {
-        let mut url = format!(
+        let url = format!(
             "https://{}.api.blizzard.com/data/wow/realm/{}?locale={}",
             self.region.get_region_abbreviation(),
             slug,
@@ -141,5 +121,36 @@ impl WorldOfWarcraftClassicClient {
         let realm = realm.json::<Realm>().await?;
 
         Ok(Some(realm))
+    }
+
+    /// Searches for realms with optional timezone, order by, and page query parameters.
+    pub async fn search_realms(
+        &self,
+        timezone: Option<Timezone>,
+        order_by: Option<String>,
+        page: Option<u32>,
+    ) -> BubbleHearthResult<SearchResult<Realm>> {
+        let mut url = format!(
+            "https://{}.api.blizzard.com/data/wow/search/realm?_page={}",
+            self.region.get_region_abbreviation(),
+            page.unwrap_or(1)
+        );
+
+        if let Some(zone) = timezone {
+            let zone_string: String = zone.into();
+            url.push_str(&format!("&timezone={}", zone_string));
+        }
+
+        if let Some(order) = order_by {
+            url.push_str(&format!("&orderby={}", order));
+        }
+
+        let search_result = self
+            .send_request(url)
+            .await?
+            .json::<SearchResult<Realm>>()
+            .await?;
+
+        Ok(search_result)
     }
 }
