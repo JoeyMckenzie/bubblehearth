@@ -6,6 +6,7 @@ use std::time::Duration;
 
 use crate::auth::AuthenticationContext;
 use crate::classic::WorldOfWarcraftClassicClient;
+use crate::localization::Locale;
 use crate::regionality::AccountRegion;
 
 const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
@@ -19,6 +20,7 @@ const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 ///
 /// #[tokio::main]
 /// async fn main() {
+///     use bubblehearth::localization::Locale;
 ///     dotenvy::dotenv().expect("test client credentials unable to load");
 ///     let client_id = std::env::var("CLIENT_ID").expect("test client ID not found");
 ///     let client_secret = std::env::var("CLIENT_SECRET").expect("test client secret not found");
@@ -26,7 +28,8 @@ const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 ///         client_id,
 ///         client_secret,
 ///         AccountRegion::US,
-///         Duration::from_secs(30),
+///         Locale::EnglishUS,
+///         Duration::from_secs(30)
 ///     );
 ///
 ///     // Retrieve an access token, with successive retrievals returning the cached token
@@ -44,9 +47,14 @@ pub struct BubbleHearthClient {
 
 impl BubbleHearthClient {
     /// Constructs a new client with default configuration options, though requiring a region.
-    pub fn new(client_id: String, client_secret: String, region: AccountRegion) -> Self {
+    pub fn new(
+        client_id: String,
+        client_secret: String,
+        region: AccountRegion,
+        locale: Locale,
+    ) -> Self {
         let default_timeout = Duration::from_secs(DEFAULT_TIMEOUT_SECONDS.into());
-        Self::new_with_timeout(client_id, client_secret, region, default_timeout)
+        Self::new_with_timeout(client_id, client_secret, region, locale, default_timeout)
     }
 
     /// Constructs a new client instance with a configurable timeout.
@@ -54,24 +62,30 @@ impl BubbleHearthClient {
         client_id: String,
         client_secret: String,
         region: AccountRegion,
+        locale: Locale,
         timeout: Duration,
     ) -> Self {
         let client = reqwest::ClientBuilder::new()
             .timeout(timeout)
             .build()
             .unwrap();
-        let ref_client = Arc::new(client);
+        let shared_client = Arc::new(client);
         let authentication = AuthenticationContext::new(
-            ref_client.clone(),
+            shared_client.clone(),
             region,
             client_id.clone(),
             client_secret.clone(),
         );
-        let ref_authentication = Arc::new(authentication);
+        let shared_authentication = Arc::new(authentication);
 
         Self {
-            authentication: ref_authentication.clone(),
-            classic: WorldOfWarcraftClassicClient::new(ref_client, region, ref_authentication),
+            authentication: shared_authentication.clone(),
+            classic: WorldOfWarcraftClassicClient::new(
+                shared_client,
+                region,
+                locale,
+                shared_authentication,
+            ),
         }
     }
 }

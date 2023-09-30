@@ -6,6 +6,7 @@ use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 use bubblehearth::client::BubbleHearthClient;
+use bubblehearth::localization::Locale;
 use bubblehearth::regionality::AccountRegion;
 
 struct AppState {
@@ -29,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
     info!("initializing application routes");
 
     let app_state = AppState {
-        client: BubbleHearthClient::new(client_id, client_secret, AccountRegion::US),
+        client: BubbleHearthClient::new(client_id, client_secret, AccountRegion::US, Locale::EnglishUS),
     };
 
     let port = 8000_u16;

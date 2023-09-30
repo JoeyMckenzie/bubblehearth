@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::classic::WorldOfWarcraftClassicClient;
 use crate::errors::BubbleHearthResult;
-use crate::localization::{Locale, StringOrStructLocale};
+use crate::localization::StringOrStructLocale;
 
 /// Response structure from the realms index endpoint, listing all available realms
 /// with associated metadata like name, status, slug, etc.
@@ -112,11 +112,11 @@ impl WorldOfWarcraftClassicClient {
     }
 
     /// Retrieves data about all available realms.
-    pub async fn get_realms(&self, locale: Locale) -> BubbleHearthResult<RealmsIndex> {
+    pub async fn get_realms(&self) -> BubbleHearthResult<RealmsIndex> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/realm/index?locale={}",
             self.region.get_region_abbreviation(),
-            locale.get_locale(),
+            self.locale.get_locale(),
         );
 
         let realms = self.send_request(url).await?.json::<RealmsIndex>().await?;
@@ -125,20 +125,13 @@ impl WorldOfWarcraftClassicClient {
     }
 
     /// Retrieves a realm's metadata based on the realm slug.
-    pub async fn get_realm(
-        &self,
-        slug: String,
-        locale: Option<Locale>,
-    ) -> BubbleHearthResult<Option<Realm>> {
+    pub async fn get_realm(&self, slug: String) -> BubbleHearthResult<Option<Realm>> {
         let mut url = format!(
-            "https://{}.api.blizzard.com/data/wow/realm/{}",
+            "https://{}.api.blizzard.com/data/wow/realm/{}?locale={}",
             self.region.get_region_abbreviation(),
             slug,
+            self.locale.get_locale()
         );
-
-        if let Some(locale_for_query) = locale {
-            url.push_str(&format!("?locale={}", locale_for_query.get_locale()));
-        }
 
         let realm = self.send_request(url).await?;
         if realm.status() == StatusCode::NOT_FOUND {

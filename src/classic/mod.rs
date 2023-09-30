@@ -4,6 +4,7 @@
 use std::sync::Arc;
 
 use crate::auth::AuthenticationContext;
+use crate::localization::Locale;
 use crate::regionality::AccountRegion;
 
 pub mod realms;
@@ -15,6 +16,8 @@ pub struct WorldOfWarcraftClassicClient {
     http: Arc<reqwest::Client>,
     /// Configured account region.
     region: AccountRegion,
+    /// Configured locale for all API calls.
+    locale: Locale,
     /// Internally cached authentication context, allowing for token reuse and smart refreshing.
     authentication: Arc<AuthenticationContext>,
 }
@@ -24,11 +27,13 @@ impl WorldOfWarcraftClassicClient {
     pub fn new(
         http: Arc<reqwest::Client>,
         region: AccountRegion,
+        locale: Locale,
         authentication: Arc<AuthenticationContext>,
     ) -> Self {
         Self {
             http,
             region,
+            locale,
             authentication,
         }
     }

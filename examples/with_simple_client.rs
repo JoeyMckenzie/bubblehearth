@@ -10,16 +10,21 @@ async fn main() {
     let client_secret =
         std::env::var("CLIENT_SECRET").expect("client secret not found within the environment");
 
-    let client = BubbleHearthClient::new(client_id, client_secret, AccountRegion::US);
+    let client = BubbleHearthClient::new(
+        client_id,
+        client_secret,
+        AccountRegion::US,
+        Locale::EnglishUS,
+    );
 
     // Get a list of World of Warcraft Classic realms
-    let realms = client.classic.get_realms(Locale::EnglishUS).await.unwrap();
+    let realms = client.classic.get_realms().await.unwrap();
     dbg!(realms);
 
     // Get an individual Classic realm
     let realm = client
         .classic
-        .get_realm("westfall".to_string(), None)
+        .get_realm("westfall".to_string())
         .await
         .unwrap();
     dbg!(realm);
