@@ -60,12 +60,22 @@ impl AuthenticationContext {
         }
     }
 
-    /// Returns a mutable copy of the current access token.
-    pub fn try_access_token(&self) -> BubbleHearthResult<String> {
+    /// Returns a mutable copy of the current access token. In the case a token refresh is required,
+    /// we'll explicitly return a none to force retrieving of a fresh accessing token.
+    pub fn try_access_token(&self) -> BubbleHearthResult<Option<String>> {
         match self.access_token.try_lock() {
             Ok(token_lock) => match token_lock.as_ref() {
                 None => Err(BubbleHearthError::AccessTokenNotFound),
-                Some(token) => Ok(token.clone()),
+                Some(token) => match self.try_refresh_required() {
+                    Ok(refresh_required) => {
+                        if refresh_required {
+                            Ok(None)
+                        } else {
+                            Ok(Some(token.to_owned()))
+                        }
+                    }
+                    Err(e) => Err(BubbleHearthError::AuthenticationLockFailed(e.to_string())),
+                },
             },
             Err(e) => Err(BubbleHearthError::AuthenticationLockFailed(e.to_string())),
         }
@@ -85,8 +95,8 @@ impl AuthenticationContext {
     /// Requests a raw access token for authenticating against all client requests.
     /// Upon retrieval, access tokens are cached within client unless explicitly flushed.
     pub async fn get_access_token(&self) -> BubbleHearthResult<String> {
-        if let Ok(token) = self.try_access_token() {
-            return Ok(token);
+        if let Ok(Some(cached_token)) = self.try_access_token() {
+            return Ok(cached_token);
         }
 
         let form = reqwest::multipart::Form::new().text("grant_type", "client_credentials");
