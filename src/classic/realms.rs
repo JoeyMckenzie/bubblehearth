@@ -41,7 +41,7 @@ pub struct Realm {
     /// Realm locale.
     pub locale: Option<String>,
     /// Realm timezone name, i.e. America/New_York, America/Los_Angeles, etc.
-    pub timezone: Option<String>,
+    pub timezone: Option<Timezone>,
     /// Flag for indicating if the realm is a PVP-based tournament realm.
     pub is_tournament: Option<bool>,
     /// Realm region, including document links.

@@ -1,4 +1,4 @@
-mod classic_realm_tests_should {
+mod classic_realm_tests {
     use bubblehearth::client::BubbleHearthClient;
     use bubblehearth::localization::{Locale, StringOrStructLocale};
     use bubblehearth::regionality::AccountRegion;
