@@ -3,11 +3,15 @@
 
 use std::sync::Arc;
 
+use http::HeaderMap;
+
 use crate::auth::AuthenticationContext;
+use crate::errors::BubbleHearthResult;
 use crate::localization::Locale;
 use crate::regionality::AccountRegion;
 
 pub mod realms;
+pub mod regions;
 
 /// A client for WoW Classic, utilizing the base client authentication.
 #[derive(Debug)]
@@ -41,5 +45,24 @@ impl WorldOfWarcraftClassicClient {
     /// Gets the region-specific namespace based on the region localilty.
     fn get_namespace_locality(&self) -> String {
         format!("dynamic-classic-{}", self.region.get_region_abbreviation())
+    }
+
+    /// Sends a request with the required namespace and authentication token.
+    async fn send_request(&self, url: String) -> BubbleHearthResult<reqwest::Response> {
+        let token = self.authentication.get_access_token().await?;
+        let mut headers = HeaderMap::new();
+        headers.append(
+            "Battlenet-Namespace",
+            self.get_namespace_locality().parse().unwrap(),
+        );
+        let response = self
+            .http
+            .get(url)
+            .headers(headers)
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        Ok(response)
     }
 }

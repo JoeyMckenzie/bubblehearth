@@ -1,6 +1,5 @@
 //! Realm data and APIs for World of Warcraft Classic.
 
-use reqwest::header::HeaderMap;
 use reqwest::StatusCode;
 use serde::Deserialize;
 
@@ -73,24 +72,6 @@ pub struct RealmType {
 }
 
 impl WorldOfWarcraftClassicClient {
-    async fn send_request(&self, url: String) -> BubbleHearthResult<reqwest::Response> {
-        let token = self.authentication.get_access_token().await?;
-        let mut headers = HeaderMap::new();
-        headers.append(
-            "Battlenet-Namespace",
-            self.get_namespace_locality().parse().unwrap(),
-        );
-        let response = self
-            .http
-            .get(url)
-            .headers(headers)
-            .bearer_auth(token)
-            .send()
-            .await?;
-
-        Ok(response)
-    }
-
     /// Retrieves data about all available realms.
     pub async fn get_realms(&self) -> BubbleHearthResult<RealmsIndex> {
         let url = format!(
