@@ -46,6 +46,20 @@ mod classic_realm_tests {
     }
 
     #[tokio::test]
+    async fn returns_realm_when_found() {
+        // arrange
+        let client = get_default_client();
+
+        // act
+        let realm = client.classic.get_realm("atiesh").await;
+        let realm_ok = realm.is_ok();
+        let realm = realm.unwrap().unwrap();
+
+        // assert
+        assert!(realm_ok);
+    }
+
+    #[tokio::test]
     async fn returns_all_realms_from_search_without_optional_params() {
         // arrange
         let client = get_default_client();

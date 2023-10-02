@@ -1,10 +1,10 @@
 //! Unix-based timezones for search queries.
 
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 /// Timezones for various endpoints, primarily for used for searching.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Eq, PartialEq)]
 pub enum Timezone {
     /// Represents the America/Los_Angeles western timezone.
     AmericaLosAngeles,

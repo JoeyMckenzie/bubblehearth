@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use axum::Router;
+use axum::extract::State;
+use axum::routing::get;
+use axum::{Json, Router};
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
+use bubblehearth::classic::realms::Realm;
 use bubblehearth::client::BubbleHearthClient;
 use bubblehearth::localization::Locale;
 use bubblehearth::regionality::AccountRegion;
@@ -30,14 +33,18 @@ async fn main() -> anyhow::Result<()> {
     info!("initializing application routes");
 
     let app_state = AppState {
-        client: BubbleHearthClient::new(client_id, client_secret, AccountRegion::US, Locale::EnglishUS),
+        client: BubbleHearthClient::new(
+            client_id,
+            client_secret,
+            AccountRegion::US,
+            Locale::EnglishUS,
+        ),
     };
 
     let port = 8000_u16;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let router = Router::new()
-        //.route("/user/:profile", get(get_user))
-        // .route("/item/:id", get(get_item))
+        .route("/realm", get(get_realm))
         .with_state(Arc::new(app_state));
 
     info!("now listening on port {}", port);
@@ -47,4 +54,15 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     Ok(())
+}
+
+async fn get_realm(State(state): State<Arc<AppState>>) -> Json<Realm> {
+    let region = state
+        .client
+        .classic
+        .get_realm("grobbulus")
+        .await
+        .expect("realm not found");
+
+    Json(region.unwrap())
 }

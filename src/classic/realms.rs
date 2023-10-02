@@ -1,7 +1,7 @@
 //! Realm data and APIs for World of Warcraft Classic.
 
 use reqwest::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::classic::WorldOfWarcraftClassicClient;
 use crate::documents::{DocumentKey, Links};
@@ -22,7 +22,7 @@ pub struct RealmsIndex {
 }
 
 /// Realm metadata for all available World of Warcraft Classic servers.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Realm {
     /// Top-level document link to follow of the selected realm ID.
     #[serde(rename = "_links")]
@@ -51,7 +51,7 @@ pub struct Realm {
 }
 
 /// Realm region data, including document links and name.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RealmRegion {
     /// Document key of the realm region.
     pub key: Option<DocumentKey>,
@@ -62,7 +62,7 @@ pub struct RealmRegion {
 }
 
 /// Realm type data, indicating PVP, PVE, Normal, etc.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RealmType {
     /// Base realm type, i.e. Normal, RP, etc.
     #[serde(rename = "type")]
@@ -86,7 +86,7 @@ impl WorldOfWarcraftClassicClient {
     }
 
     /// Retrieves a realm's metadata based on the realm slug.
-    pub async fn get_realm(&self, slug: String) -> BubbleHearthResult<Option<Realm>> {
+    pub async fn get_realm(&self, slug: &str) -> BubbleHearthResult<Option<Realm>> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/realm/{}?locale={}",
             self.region.get_region_abbreviation(),

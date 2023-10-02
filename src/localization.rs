@@ -17,7 +17,7 @@
 
 use std::str::FromStr;
 
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 use crate::errors::BubbleHearthError;
@@ -85,7 +85,7 @@ impl Locale {
 
 /// A struct-based version of the locale, useful for deserializing the
 /// JSON value returned from Blizzard into the typed enum locale variant.
-#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StructuredLocale {
     /// Represents United States English locale.
     #[serde(rename = "en_US")]
@@ -150,7 +150,7 @@ impl FromStr for Locale {
 }
 
 /// A localization response model that can be deserialized as a string or struct.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum StringOrStructLocale {
     /// String-based locale.
     StringLocale(String),

@@ -22,11 +22,7 @@ async fn main() {
     dbg!(realms);
 
     // Get an individual Classic realm
-    let realm = client
-        .classic
-        .get_realm("westfall".to_string())
-        .await
-        .unwrap();
+    let realm = client.classic.get_realm("westfall").await.unwrap();
     dbg!(realm);
 
     // We can explicitly request access tokens, though the client will internally grab one from Blizzard and refresh as needed
