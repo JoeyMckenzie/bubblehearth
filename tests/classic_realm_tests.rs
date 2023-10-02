@@ -2,6 +2,7 @@ mod classic_realm_tests {
     use bubblehearth::client::BubbleHearthClient;
     use bubblehearth::localization::{Locale, StringOrStructLocale};
     use bubblehearth::regionality::AccountRegion;
+    use bubblehearth::timezone::Timezone;
 
     pub fn get_default_client() -> BubbleHearthClient {
         get_regional_client(AccountRegion::US, Locale::EnglishUS)
@@ -82,5 +83,39 @@ mod classic_realm_tests {
         assert_eq!(realm_data.page_count, 1);
         assert!(realm_data.results.is_empty());
         assert_eq!(realm_data.results.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn returns_realms_from_timezone_when_specified() {
+        // arrange
+        let client = get_default_client();
+
+        // act
+        let (us_west_realms, us_east_realms) = tokio::join!(
+            client
+                .classic
+                .search_realms(Some(Timezone::AmericaLosAngeles), None, None),
+            client
+                .classic
+                .search_realms(Some(Timezone::AmericaNewYork), None, None)
+        );
+        let us_west_realms_ok = us_west_realms.is_ok();
+        let us_east_realms_ok = us_west_realms.is_ok();
+        let us_west_realms_result = us_west_realms.unwrap();
+        let us_east_realms_result = us_east_realms.unwrap();
+
+        // assert
+        assert!(us_west_realms_ok);
+        assert!(us_east_realms_ok);
+        assert!(!us_west_realms_result.results.is_empty());
+        assert!(!us_east_realms_result.results.is_empty());
+        us_west_realms_result
+            .results
+            .into_iter()
+            .for_each(|r| assert_eq!(r.data.timezone.unwrap(), Timezone::AmericaLosAngeles));
+        us_east_realms_result
+            .results
+            .into_iter()
+            .for_each(|r| assert_eq!(r.data.timezone.unwrap(), Timezone::AmericaNewYork));
     }
 }

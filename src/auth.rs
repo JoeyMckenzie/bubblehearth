@@ -61,7 +61,7 @@ impl AuthenticationContext {
     }
 
     /// Returns a mutable copy of the current access token. In the case a token refresh is required,
-    /// we'll explicitly return a none to force retrieving of a fresh accessing token.
+    /// explicitly return a none to force retrieving of a fresh accessing token.
     pub fn try_access_token(&self) -> BubbleHearthResult<Option<String>> {
         match self.access_token.try_lock() {
             Ok(token_lock) => match token_lock.as_ref() {
