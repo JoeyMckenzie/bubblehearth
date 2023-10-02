@@ -27,7 +27,7 @@ async fn main() {
 
     // We can explicitly request access tokens, though the client will internally grab one from Blizzard and refresh as needed
     // In the example above, we simply create a client connection and start sending requests
-    let token = client
+    let _token = client
         .authentication
         .get_access_token()
         .await

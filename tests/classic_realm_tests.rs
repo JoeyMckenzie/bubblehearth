@@ -53,10 +53,24 @@ mod classic_realm_tests {
         // act
         let realm = client.classic.get_realm("atiesh").await;
         let realm_ok = realm.is_ok();
-        let realm = realm.unwrap().unwrap();
 
         // assert
         assert!(realm_ok);
+        assert!(realm.unwrap().is_some());
+    }
+
+    #[tokio::test]
+    async fn returns_no_realm_when_slug_invalid() {
+        // arrange
+        let client = get_default_client();
+
+        // act
+        let realm = client.classic.get_realm("not atiesh").await;
+        let realm_ok = realm.is_ok();
+
+        // assert
+        assert!(realm_ok);
+        assert!(realm.unwrap().is_none());
     }
 
     #[tokio::test]
