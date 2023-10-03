@@ -166,7 +166,7 @@ impl BubbleHearthClient {
 
     /// Sends a request with the required namespace and authentication token.
     pub async fn send_request(&self, url: String) -> BubbleHearthResult<reqwest::Response> {
-        // let token = self.authentication.get_access_token().await?;
+        let token = self.get_access_token().await?;
         let mut headers = HeaderMap::new();
         headers.append(
             "Battlenet-Namespace",
@@ -176,7 +176,7 @@ impl BubbleHearthClient {
             .http
             .get(url)
             .headers(headers)
-            // .bearer_auth(token)
+            .bearer_auth(token)
             .send()
             .await?;
 
