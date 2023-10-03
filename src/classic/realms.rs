@@ -3,7 +3,7 @@
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
-use crate::classic::WorldOfWarcraftClassicClient;
+use crate::classic::WorldOfWarcraftClassicConnector;
 use crate::documents::{DocumentKey, Links};
 use crate::errors::BubbleHearthResult;
 use crate::localization::StringOrStructLocale;
@@ -71,16 +71,21 @@ pub struct RealmType {
     pub name: StringOrStructLocale,
 }
 
-impl WorldOfWarcraftClassicClient {
+impl<'a> WorldOfWarcraftClassicConnector<'a> {
     /// Retrieves data about all available realms.
     pub async fn get_realms(&self) -> BubbleHearthResult<RealmsIndex> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/realm/index?locale={}",
-            self.region.get_region_abbreviation(),
-            self.locale.get_locale(),
+            self.client.region.get_region_abbreviation(),
+            self.client.locale.get_locale(),
         );
 
-        let realms = self.send_request(url).await?.json::<RealmsIndex>().await?;
+        let realms = self
+            .client
+            .send_request(url)
+            .await?
+            .json::<RealmsIndex>()
+            .await?;
 
         Ok(realms)
     }
@@ -89,12 +94,12 @@ impl WorldOfWarcraftClassicClient {
     pub async fn get_realm(&self, slug: &str) -> BubbleHearthResult<Option<Realm>> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/realm/{}?locale={}",
-            self.region.get_region_abbreviation(),
+            self.client.region.get_region_abbreviation(),
             slug,
-            self.locale.get_locale()
+            self.client.locale.get_locale()
         );
 
-        let realm = self.send_request(url).await?;
+        let realm = self.client.send_request(url).await?;
         if realm.status() == StatusCode::NOT_FOUND {
             return Ok(None);
         }
@@ -113,7 +118,7 @@ impl WorldOfWarcraftClassicClient {
     ) -> BubbleHearthResult<SearchResult<Realm>> {
         let mut url = format!(
             "https://{}.api.blizzard.com/data/wow/search/realm?_page={}",
-            self.region.get_region_abbreviation(),
+            self.client.region.get_region_abbreviation(),
             page.unwrap_or(1)
         );
 
@@ -127,6 +132,7 @@ impl WorldOfWarcraftClassicClient {
         }
 
         let search_result = self
+            .client
             .send_request(url)
             .await?
             .json::<SearchResult<Realm>>()

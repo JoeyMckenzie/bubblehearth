@@ -18,17 +18,16 @@ async fn main() {
     );
 
     // Get a list of World of Warcraft Classic realms
-    let realms = client.classic.get_realms().await.unwrap();
+    let realms = client.classic().get_realms().await.unwrap();
     dbg!(realms);
 
     // Get an individual Classic realm
-    let realm = client.classic.get_realm("westfall").await.unwrap();
+    let realm = client.classic().get_realm("westfall").await.unwrap();
     dbg!(realm);
 
     // We can explicitly request access tokens, though the client will internally grab one from Blizzard and refresh as needed
     // In the example above, we simply create a client connection and start sending requests
     let _token = client
-        .authentication
         .get_access_token()
         .await
         .expect("access token was unable to be retrieved");

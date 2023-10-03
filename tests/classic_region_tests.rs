@@ -20,7 +20,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let regions_index_result = client.classic.get_regions().await;
+        let regions_index_result = client.classic().get_regions().await;
         let regions_index_ok = regions_index_result.is_ok();
         let regions_result = regions_index_result.unwrap();
 
@@ -40,7 +40,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let region_result = client.classic.get_region(41).await;
+        let region_result = client.classic().get_region(41).await;
         let region_result_ok = region_result.is_ok();
         let us_region = region_result.unwrap().unwrap();
 
@@ -57,7 +57,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let region_result = client.classic.get_region(420).await;
+        let region_result = client.classic().get_region(420).await;
         let region_result_ok = region_result.is_ok();
         let no_region = region_result.unwrap();
 

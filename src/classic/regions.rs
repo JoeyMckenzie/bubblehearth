@@ -3,7 +3,7 @@
 use http::StatusCode;
 use serde::Deserialize;
 
-use crate::classic::WorldOfWarcraftClassicClient;
+use crate::classic::WorldOfWarcraftClassicConnector;
 use crate::documents::Links;
 use crate::errors::BubbleHearthResult;
 
@@ -31,16 +31,21 @@ pub struct Region {
     pub tag: Option<String>,
 }
 
-impl WorldOfWarcraftClassicClient {
+impl<'a> WorldOfWarcraftClassicConnector<'a> {
     /// Retrieves data about all available regions.
     pub async fn get_regions(&self) -> BubbleHearthResult<RegionsIndex> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/region/index?locale={}",
-            self.region.get_region_abbreviation(),
-            self.locale.get_locale(),
+            self.client.region.get_region_abbreviation(),
+            self.client.locale.get_locale(),
         );
 
-        let regions = self.send_request(url).await?.json::<RegionsIndex>().await?;
+        let regions = self
+            .client
+            .send_request(url)
+            .await?
+            .json::<RegionsIndex>()
+            .await?;
 
         Ok(regions)
     }
@@ -49,11 +54,11 @@ impl WorldOfWarcraftClassicClient {
     pub async fn get_region(&self, region_id: u32) -> BubbleHearthResult<Option<Region>> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/region/{region_id}?locale={}",
-            self.region.get_region_abbreviation(),
-            self.locale.get_locale(),
+            self.client.region.get_region_abbreviation(),
+            self.client.locale.get_locale(),
         );
 
-        let region_response = self.send_request(url).await?;
+        let region_response = self.client.send_request(url).await?;
         if region_response.status() == StatusCode::NOT_FOUND {
             return Ok(None);
         }

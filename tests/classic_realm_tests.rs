@@ -21,7 +21,7 @@ mod classic_realm_tests {
         let client = get_regional_client(AccountRegion::KR, Locale::Korean);
 
         // act
-        let realms_index = client.classic.get_realms().await;
+        let realms_index = client.classic().get_realms().await;
         let realms_index = realms_index.unwrap();
         let shimmering_flats = realms_index.realms.get(1).unwrap();
 
@@ -38,7 +38,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let realms_index = client.classic.get_realms().await;
+        let realms_index = client.classic().get_realms().await;
 
         // assert
         assert!(realms_index.is_ok());
@@ -51,7 +51,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let realm = client.classic.get_realm("atiesh").await;
+        let realm = client.classic().get_realm("atiesh").await;
         let realm_ok = realm.is_ok();
 
         // assert
@@ -65,7 +65,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let realm = client.classic.get_realm("not atiesh").await;
+        let realm = client.classic().get_realm("not atiesh").await;
         let realm_ok = realm.is_ok();
 
         // assert
@@ -79,7 +79,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let realm_search = client.classic.search_realms(None, None, None).await;
+        let realm_search = client.classic().search_realms(None, None, None).await;
         let is_ok = realm_search.is_ok();
         let realm_data = realm_search.unwrap();
 
@@ -99,7 +99,7 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
-        let realm_search = client.classic.search_realms(None, None, Some(12)).await;
+        let realm_search = client.classic().search_realms(None, None, Some(12)).await;
         let is_ok = realm_search.is_ok();
         let realm_data = realm_search.unwrap();
 
@@ -119,13 +119,10 @@ mod classic_realm_tests {
         let client = get_default_client();
 
         // act
+        let classic = client.classic();
         let (us_west_realms, us_east_realms) = tokio::join!(
-            client
-                .classic
-                .search_realms(Some(Timezone::AmericaLosAngeles), None, None),
-            client
-                .classic
-                .search_realms(Some(Timezone::AmericaNewYork), None, None)
+            classic.search_realms(Some(Timezone::AmericaLosAngeles), None, None),
+            classic.search_realms(Some(Timezone::AmericaNewYork), None, None)
         );
         let us_west_realms_ok = us_west_realms.is_ok();
         let us_east_realms_ok = us_west_realms.is_ok();

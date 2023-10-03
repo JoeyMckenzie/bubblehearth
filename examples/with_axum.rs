@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
 async fn get_realm(State(state): State<Arc<AppState>>) -> Json<Realm> {
     let region = state
         .client
-        .classic
+        .classic()
         .get_realm("grobbulus")
         .await
         .expect("realm not found");
