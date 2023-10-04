@@ -10,10 +10,12 @@ use time::OffsetDateTime;
 
 use crate::auth::AccessTokenResponse;
 use crate::classic::WorldOfWarcraftClassicConnector;
+use crate::connectors::ClientConnector;
 use crate::errors::{BubbleHearthError, BubbleHearthResult};
 use crate::localization::Locale;
 use crate::regionality::AccountRegion;
 
+/// Default the reqwest HTTP timeout to 5 seconds, overridable if provided.
 const DEFAULT_TIMEOUT_SECONDS: u8 = 5;
 
 /// The primary BubbleHearth client, acting as the gateway for connecting.
@@ -185,6 +187,6 @@ impl BubbleHearthClient {
 
     /// A client connector for interacting with World of Warcraft Classic Game Data APIs.
     pub fn classic(&self) -> WorldOfWarcraftClassicConnector {
-        WorldOfWarcraftClassicConnector::new_client(self)
+        WorldOfWarcraftClassicConnector::new_connector(self)
     }
 }

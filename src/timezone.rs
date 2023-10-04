@@ -66,33 +66,33 @@ mod timezone_tests {
 
     #[test]
     fn returns_timezone_when_match_found() {
-        // arrange
+        // Arrange
         let data = r#"
         {
             "timezone": "America/Los_Angeles"
         }
         "#;
 
-        // act
+        // Act
         let timezone_struct: TestStruct = serde_json::from_str(data).unwrap();
 
-        // assert
+        // Assert
         assert_eq!(timezone_struct.timezone, Timezone::AmericaLosAngeles);
     }
 
     #[test]
     fn returns_timezone_unknown_when_no_match_found() {
-        // arrange
+        // Arrange
         let data = r#"
         {
             "timezone": "Unrecognized_timezone"
         }
         "#;
 
-        // act
+        // Act
         let timezone_struct: TestStruct = serde_json::from_str(data).unwrap();
 
-        // assert
+        // Assert
         assert_eq!(timezone_struct.timezone, Timezone::Unknown);
     }
 }

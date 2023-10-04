@@ -16,8 +16,10 @@
 mod auth;
 pub mod classic;
 pub mod client;
+mod connectors;
 mod documents;
 pub mod errors;
+pub mod hearthstone;
 pub mod localization;
 pub mod regionality;
 pub mod search;

@@ -4,7 +4,7 @@ use bubblehearth::regionality::AccountRegion;
 
 #[tokio::test]
 async fn returns_access_token_given_proper_credentials() {
-    // arrange
+    // Arrange
     dotenvy::dotenv().expect("test client credentials unable to load");
     let client_id = std::env::var("CLIENT_ID").expect("test client ID not found");
     let client_secret = std::env::var("CLIENT_SECRET").expect("test client secret not found");
@@ -15,17 +15,17 @@ async fn returns_access_token_given_proper_credentials() {
         Locale::EnglishUS,
     );
 
-    // act
+    // Act
     let token = client.get_access_token().await;
 
-    // assert
+    // Assert
     assert!(token.is_ok());
     assert!(!token.unwrap().is_empty());
 }
 
 #[tokio::test]
 async fn returns_cached_access_token_when_multiple_calls_outgoing() {
-    // arrange
+    // Arrange
     dotenvy::dotenv().expect("test client credentials unable to load");
     let client_id = std::env::var("CLIENT_ID").expect("test client ID not found");
     let client_secret = std::env::var("CLIENT_SECRET").expect("test client secret not found");
@@ -36,17 +36,17 @@ async fn returns_cached_access_token_when_multiple_calls_outgoing() {
         Locale::EnglishUS,
     );
 
-    // act, get the first token and verify it's the cached token the second time around
+    // Act, get the first token and verify it's the cached token the second time around
     let token = client.get_access_token().await.unwrap();
     let cached_token = client.get_access_token().await.unwrap();
 
-    // assert
+    // Assert
     assert_eq!(token, cached_token);
 }
 
 #[tokio::test]
 async fn returns_error_when_credentials_invalid() {
-    // arrange
+    // Arrange
     dotenvy::dotenv().expect("test client credentials unable to load");
     let client = BubbleHearthClient::new(
         "client_id".to_string(),
@@ -55,9 +55,9 @@ async fn returns_error_when_credentials_invalid() {
         Locale::EnglishUS,
     );
 
-    // act
+    // Act
     let token = client.get_access_token().await;
 
-    // assert
+    // Assert
     assert!(token.is_err());
 }

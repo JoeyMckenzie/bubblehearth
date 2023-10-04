@@ -16,15 +16,15 @@ mod classic_realm_tests {
 
     #[tokio::test]
     async fn returns_regions_index() {
-        // arrange
+        // Arrange
         let client = get_default_client();
 
-        // act
+        // Act
         let regions_index_result = client.classic().get_regions().await;
         let regions_index_ok = regions_index_result.is_ok();
         let regions_result = regions_index_result.unwrap();
 
-        // assert
+        // Assert
         assert!(regions_index_ok);
         assert!(!regions_result.regions.is_empty());
         regions_result.regions.into_iter().for_each(|r| {
@@ -36,15 +36,15 @@ mod classic_realm_tests {
 
     #[tokio::test]
     async fn returns_region_with_valid_id() {
-        // arrange
+        // Arrange
         let client = get_default_client();
 
-        // act
+        // Act
         let region_result = client.classic().get_region(41).await;
         let region_result_ok = region_result.is_ok();
         let us_region = region_result.unwrap().unwrap();
 
-        // assert
+        // Assert
         assert!(region_result_ok);
         assert!(us_region.name.is_some());
         assert!(us_region.id.is_some());
@@ -53,15 +53,15 @@ mod classic_realm_tests {
 
     #[tokio::test]
     async fn returns_no_region_with_invalid_id() {
-        // arrange
+        // Arrange
         let client = get_default_client();
 
-        // act
+        // Act
         let region_result = client.classic().get_region(420).await;
         let region_result_ok = region_result.is_ok();
         let no_region = region_result.unwrap();
 
-        // assert
+        // Assert
         assert!(region_result_ok);
         assert!(no_region.is_none());
     }
