@@ -7,7 +7,7 @@ impl<'a> HearthstoneConnector<'a> {
     /// Searches for cards fronts and back based on the provided search criteria.
     pub async fn search_cards(&self) -> BubbleHearthResult<()> {
         self.client
-            .send_request(format!(
+            .send_request_and_deserialize(format!(
                 "https://us.api.blizzard.com/hearthstone/cards?locale={}",
                 self.client.locale.get_locale()
             ))

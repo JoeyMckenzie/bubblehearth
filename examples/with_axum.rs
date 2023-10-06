@@ -20,6 +20,10 @@ struct AppState {
     client: BubbleHearthClient,
 }
 
+/// Define your own structs for marshalling between the client provided responses
+/// and what you'd like to return to users. The client does not provide serialization
+/// for responses, so it's up to consumers on how they want to represent the typed
+/// responses provided by the library.
 #[derive(Serialize)]
 struct RealmResponse {
     name: String,

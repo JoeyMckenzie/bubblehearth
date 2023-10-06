@@ -13,6 +13,7 @@ use crate::auth::AccessTokenResponse;
 use crate::classic::WorldOfWarcraftClassicConnector;
 use crate::connectors::ClientConnector;
 use crate::errors::{BubbleHearthError, BubbleHearthResult};
+use crate::hearthstone::HearthstoneConnector;
 use crate::localization::Locale;
 use crate::regionality::AccountRegion;
 
@@ -101,7 +102,7 @@ impl BubbleHearthClient {
 
     /// Returns a mutable copy of the current access token. In the case a token refresh is required,
     /// explicitly return a none to force retrieving of a fresh accessing token.
-    pub fn try_access_token(&self) -> BubbleHearthResult<Option<String>> {
+    fn try_access_token(&self) -> BubbleHearthResult<Option<String>> {
         match self.access_token.try_lock() {
             Ok(token_lock) => match token_lock.as_ref() {
                 None => Err(BubbleHearthError::AccessTokenNotFound),
@@ -121,7 +122,7 @@ impl BubbleHearthClient {
     }
 
     /// Determines if the current access has expired and requires refreshing.
-    pub fn try_refresh_required(&self) -> BubbleHearthResult<bool> {
+    fn try_refresh_required(&self) -> BubbleHearthResult<bool> {
         match self.expires_at.try_lock() {
             Ok(expiration) => {
                 let now = OffsetDateTime::now_utc();
@@ -163,12 +164,12 @@ impl BubbleHearthClient {
     }
 
     /// Gets the region-specific namespace based on the region localilty.
-    pub fn get_namespace_locality(&self) -> String {
+    fn get_namespace_locality(&self) -> String {
         format!("dynamic-classic-{}", self.region.get_region_abbreviation())
     }
 
     /// Sends a request with the required namespace and authentication token.
-    pub async fn send_request(&self, url: String) -> BubbleHearthResult<reqwest::Response> {
+    async fn send_request(&self, url: String) -> BubbleHearthResult<reqwest::Response> {
         let token = self.get_access_token().await?;
         let mut headers = HeaderMap::new();
         headers.append(
@@ -187,7 +188,7 @@ impl BubbleHearthClient {
     }
 
     /// Sends a request with the required namespace and authentication token and deserializes the response.
-    pub async fn send_request_and_deserialize<T: for<'de> Deserialize<'de>>(
+    pub(crate) async fn send_request_and_deserialize<T: for<'de> Deserialize<'de>>(
         &self,
         url: String,
     ) -> BubbleHearthResult<T> {
@@ -196,7 +197,7 @@ impl BubbleHearthClient {
     }
 
     /// Sends a request with the required namespace and authentication token and deserializes the response.
-    pub async fn send_request_and_optionally_deserialize<T: for<'de> Deserialize<'de>>(
+    pub(crate) async fn send_request_and_optionally_deserialize<T: for<'de> Deserialize<'de>>(
         &self,
         url: String,
     ) -> BubbleHearthResult<Option<T>> {
@@ -214,5 +215,10 @@ impl BubbleHearthClient {
     /// A client connector for interacting with World of Warcraft Classic Game Data APIs.
     pub fn classic(&self) -> WorldOfWarcraftClassicConnector {
         WorldOfWarcraftClassicConnector::new_connector(self)
+    }
+
+    /// A client connector for interacting with Hearthstone Game Data APIs.
+    pub fn hearthstone(&self) -> HearthstoneConnector {
+        HearthstoneConnector::new_connector(self)
     }
 }
