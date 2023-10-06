@@ -1,6 +1,5 @@
 //! Region data models and various APIs for retrieval and searching.
 
-use http::StatusCode;
 use serde::Deserialize;
 
 use crate::classic::WorldOfWarcraftClassicConnector;
@@ -42,9 +41,7 @@ impl<'a> WorldOfWarcraftClassicConnector<'a> {
 
         let regions = self
             .client
-            .send_request(url)
-            .await?
-            .json::<RegionsIndex>()
+            .send_request_and_deserialize::<RegionsIndex>(url)
             .await?;
 
         Ok(regions)
@@ -58,13 +55,11 @@ impl<'a> WorldOfWarcraftClassicConnector<'a> {
             self.client.locale.get_locale(),
         );
 
-        let region_response = self.client.send_request(url).await?;
-        if region_response.status() == StatusCode::NOT_FOUND {
-            return Ok(None);
-        }
+        let region = self
+            .client
+            .send_request_and_optionally_deserialize::<Region>(url)
+            .await?;
 
-        let region = region_response.json::<Region>().await?;
-
-        Ok(Some(region))
+        Ok(region)
     }
 }

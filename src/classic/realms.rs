@@ -1,6 +1,5 @@
 //! Realm data and APIs for World of Warcraft Classic.
 
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 use crate::classic::WorldOfWarcraftClassicConnector;
@@ -82,9 +81,7 @@ impl<'a> WorldOfWarcraftClassicConnector<'a> {
 
         let realms = self
             .client
-            .send_request(url)
-            .await?
-            .json::<RealmsIndex>()
+            .send_request_and_deserialize::<RealmsIndex>(url)
             .await?;
 
         Ok(realms)
@@ -99,14 +96,12 @@ impl<'a> WorldOfWarcraftClassicConnector<'a> {
             self.client.locale.get_locale()
         );
 
-        let realm = self.client.send_request(url).await?;
-        if realm.status() == StatusCode::NOT_FOUND {
-            return Ok(None);
-        }
+        let realm = self
+            .client
+            .send_request_and_optionally_deserialize::<Realm>(url)
+            .await?;
 
-        let realm = realm.json::<Realm>().await?;
-
-        Ok(Some(realm))
+        Ok(realm)
     }
 
     /// Searches for realms with optional timezone, order by, and page query parameters.
@@ -133,9 +128,7 @@ impl<'a> WorldOfWarcraftClassicConnector<'a> {
 
         let search_result = self
             .client
-            .send_request(url)
-            .await?
-            .json::<SearchResult<Realm>>()
+            .send_request_and_deserialize::<SearchResult<Realm>>(url)
             .await?;
 
         Ok(search_result)

@@ -5,7 +5,8 @@ use std::ops::Add;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use http::HeaderMap;
+use http::{HeaderMap, StatusCode};
+use serde::Deserialize;
 use time::OffsetDateTime;
 
 use crate::auth::AccessTokenResponse;
@@ -183,6 +184,31 @@ impl BubbleHearthClient {
             .await?;
 
         Ok(response)
+    }
+
+    /// Sends a request with the required namespace and authentication token and deserializes the response.
+    pub async fn send_request_and_deserialize<T: for<'de> Deserialize<'de>>(
+        &self,
+        url: String,
+    ) -> BubbleHearthResult<T> {
+        let response = self.send_request(url).await?.json::<T>().await?;
+        Ok(response)
+    }
+
+    /// Sends a request with the required namespace and authentication token and deserializes the response.
+    pub async fn send_request_and_optionally_deserialize<T: for<'de> Deserialize<'de>>(
+        &self,
+        url: String,
+    ) -> BubbleHearthResult<Option<T>> {
+        let response = self.send_request(url).await?;
+
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+
+        let response = response.json::<T>().await?;
+
+        Ok(Some(response))
     }
 
     /// A client connector for interacting with World of Warcraft Classic Game Data APIs.
