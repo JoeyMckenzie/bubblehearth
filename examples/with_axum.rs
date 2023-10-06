@@ -1,19 +1,49 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use axum::extract::State;
+use axum::extract::{Path, State};
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
+use http::StatusCode;
+use serde::Serialize;
+use thiserror::Error;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 use bubblehearth::classic::realms::Realm;
 use bubblehearth::client::BubbleHearthClient;
-use bubblehearth::localization::Locale;
+use bubblehearth::localization::{Locale, StringOrStructLocale};
 use bubblehearth::regionality::AccountRegion;
 
 struct AppState {
     client: BubbleHearthClient,
+}
+
+#[derive(Serialize)]
+struct RealmResponse {
+    name: String,
+}
+
+#[derive(Debug, Error)]
+enum AppError {
+    #[error("Realm {0} was not found.")]
+    RealmNotFound(String),
+    #[error("Uh oh... an error occurred :(")]
+    InternalError,
+    #[error("An error occurred calling the API.")]
+    ClientError(#[from] bubblehearth::errors::BubbleHearthError),
+}
+
+impl TryFrom<Realm> for RealmResponse {
+    type Error = AppError;
+
+    fn try_from(value: Realm) -> Result<Self, Self::Error> {
+        match value.name {
+            StringOrStructLocale::StringLocale(realm) => Ok(RealmResponse { name: realm }),
+            StringOrStructLocale::StructLocale(_) => Err(AppError::InternalError),
+        }
+    }
 }
 
 #[tokio::main]
@@ -44,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
     let port = 8000_u16;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let router = Router::new()
-        .route("/realm", get(get_realm))
+        .route("/realm/:slug", get(get_realm))
         .with_state(Arc::new(app_state));
 
     info!("now listening on port {}", port);
@@ -56,13 +86,28 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn get_realm(State(state): State<Arc<AppState>>) -> Json<Realm> {
-    let region = state
-        .client
-        .classic()
-        .get_realm("grobbulus")
-        .await
-        .expect("realm not found");
+async fn get_realm(
+    Path(realm): Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<RealmResponse>, AppError> {
+    let region = state.client.classic().get_realm(&realm).await?;
 
-    Json(region.unwrap())
+    match region {
+        None => Err(AppError::RealmNotFound(realm)),
+        Some(found_region) => {
+            let response: Json<RealmResponse> = Json(found_region.try_into()?);
+            Ok(response)
+        }
+    }
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        let status = match self {
+            AppError::RealmNotFound(_) => StatusCode::NOT_FOUND,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+
+        status.into_response()
+    }
 }
