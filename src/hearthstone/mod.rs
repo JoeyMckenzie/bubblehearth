@@ -4,6 +4,7 @@
 use crate::client::BubbleHearthClient;
 use crate::connectors::ClientConnector;
 
+pub mod card_search;
 pub mod cards;
 
 /// A client for WoW Classic, utilizing the base client authentication.
