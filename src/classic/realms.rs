@@ -76,7 +76,7 @@ impl<'a> WorldOfWarcraftClassicConnector<'a> {
         let url = format!(
             "https://{}.api.blizzard.com/data/wow/realm/index?locale={}",
             self.client.region.get_region_abbreviation(),
-            self.client.locale.get_locale(),
+            self.client.locale.get_normalized_locale(),
         );
 
         let realms = self
@@ -93,7 +93,7 @@ impl<'a> WorldOfWarcraftClassicConnector<'a> {
             "https://{}.api.blizzard.com/data/wow/realm/{}?locale={}",
             self.client.region.get_region_abbreviation(),
             slug,
-            self.client.locale.get_locale()
+            self.client.locale.get_normalized_locale()
         );
 
         let realm = self

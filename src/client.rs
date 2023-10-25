@@ -135,6 +135,7 @@ impl BubbleHearthClient {
     /// Requests a raw access token for authenticating against all client requests.
     /// Upon retrieval, access tokens are cached within client unless explicitly flushed.
     pub async fn get_access_token(&self) -> BubbleHearthResult<String> {
+        // If we have a cached access token, go ahead and grab it as it hasn't hit the expired time yet
         if let Ok(Some(cached_token)) = self.try_access_token() {
             return Ok(cached_token);
         }

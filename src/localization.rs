@@ -65,7 +65,7 @@ pub enum Locale {
 
 impl Locale {
     /// Gets the corresponding locality code for the locale.
-    pub fn get_locale(&self) -> &str {
+    pub fn get_normalized_locale(&self) -> &str {
         match self {
             Locale::EnglishUS => "en_US",
             Locale::EnglishGB => "en_GB",
@@ -161,7 +161,7 @@ pub enum StringOrStructLocale {
 /// Allows dynamic serialization based on the locale data returned from an item.
 /// For certain endpoints, Blizzard may return either a string for the locale
 /// or an object. Taking realms, as an example, when retrieving one or many
-/// without specifying a locale wil return the following:
+/// without specifying a locale will return the following:
 ///
 /// ```json
 /// {

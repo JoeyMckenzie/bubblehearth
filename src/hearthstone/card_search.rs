@@ -3,14 +3,14 @@
 use crate::errors::BubbleHearthResult;
 
 /// A query search struct containing all the various filters available for card searching.
-#[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct CardSearchQuery<'a> {
     /// The slug of the set the card belongs to. If you do not supply a value, cards from all sets will be returned.
     pub set: Option<&'a str>,
     /// The slug of the card's class.
     pub class: Option<&'a str>,
     /// The mana cost required to play the card. You can include multiple values in a comma-separated list of numeric values.
-    pub mana_cost: Option<u32>,
+    pub mana_cost: Option<Vec<u32>>,
 }
 
 /// A query builder for fluently building card search queries.
@@ -21,7 +21,7 @@ pub struct CardSearchQuery<'a> {
 /// let builder = CardSearchQueryBuilder::default();
 /// let query = builder.with_set("").with_class("38913-a-light-in-the-darkness").build().ok();
 /// ```
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CardSearchQueryBuilder<'a> {
     query: CardSearchQuery<'a>,
 }
@@ -41,7 +41,7 @@ impl<'a> CardSearchQueryBuilder<'a> {
     }
 
     /// Include a set for searching.
-    pub fn with_set(&self, set: &'a str) -> Self {
+    pub fn with_set(self, set: &'a str) -> Self {
         Self {
             query: CardSearchQuery {
                 set: Some(set),
@@ -51,7 +51,7 @@ impl<'a> CardSearchQueryBuilder<'a> {
     }
 
     /// Include a card slug for searching.
-    pub fn with_class(&self, slug: &'a str) -> Self {
+    pub fn with_class(self, slug: &'a str) -> Self {
         Self {
             query: CardSearchQuery {
                 class: Some(slug),
@@ -61,7 +61,18 @@ impl<'a> CardSearchQueryBuilder<'a> {
     }
 
     /// Include a mana cost for searching.
-    pub fn with_mana_cost(&self, mana_cost: u32) -> Self {
+    pub fn with_mana_cost(self, mut mana_cost: Vec<u32>) -> Self {
+        if let Some(existing_mana_costs) = self.query.mana_cost {
+            let mut updated_mana_costs = existing_mana_costs.clone();
+            updated_mana_costs.append(&mut mana_cost);
+            return Self {
+                query: CardSearchQuery {
+                    mana_cost: Some(updated_mana_costs),
+                    ..self.query
+                },
+            };
+        }
+
         Self {
             query: CardSearchQuery {
                 mana_cost: Some(mana_cost),
@@ -94,5 +105,41 @@ mod card_search_queries {
         assert!(query_ok);
         assert_eq!(query.set, Some("set"));
         assert_eq!(query.class, Some("slug"));
+    }
+
+    #[test]
+    fn returns_ok_when_built_with_lists() {
+        // Arrange
+        let expected = vec![100, 200];
+        let builder = CardSearchQueryBuilder::new();
+
+        // Act
+        let query = builder.with_mana_cost(expected.clone()).build();
+        let query_ok = query.is_ok();
+        let query = query.unwrap();
+
+        // Assert
+        assert!(query_ok);
+        assert_eq!(query.mana_cost, Some(expected));
+    }
+
+    #[test]
+    fn returns_ok_when_built_with_lists_and_appended() {
+        // Arrange
+        let expected = vec![100, 200, 300];
+        let builder = CardSearchQueryBuilder::new();
+
+        // Act
+        let query = builder
+            .with_mana_cost(vec![100, 200])
+            .with_mana_cost(vec![300])
+            .build();
+
+        let query_ok = query.is_ok();
+        let query = query.unwrap();
+
+        // Assert
+        assert!(query_ok);
+        assert_eq!(query.mana_cost, Some(expected));
     }
 }
