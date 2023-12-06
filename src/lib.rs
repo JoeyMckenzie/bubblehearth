@@ -13,6 +13,8 @@
     clippy::single_char_pattern
 )]
 
+type BubbleHearthId = u32;
+
 mod auth;
 pub mod classic;
 pub mod client;

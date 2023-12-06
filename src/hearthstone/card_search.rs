@@ -10,7 +10,7 @@ pub struct CardSearchQuery<'a> {
     /// The slug of the card's class.
     pub class: Option<&'a str>,
     /// The mana cost required to play the card. You can include multiple values in a comma-separated list of numeric values.
-    pub mana_cost: Option<Vec<u32>>,
+    pub mana_costs: Option<Vec<u32>>,
 }
 
 /// A query builder for fluently building card search queries.
@@ -60,24 +60,33 @@ impl<'a> CardSearchQueryBuilder<'a> {
         }
     }
 
-    /// Include a mana cost for searching.
-    pub fn with_mana_cost(self, mut mana_cost: Vec<u32>) -> Self {
-        if let Some(existing_mana_costs) = self.query.mana_cost {
-            let mut updated_mana_costs = existing_mana_costs.clone();
-            updated_mana_costs.append(&mut mana_cost);
-            return Self {
-                query: CardSearchQuery {
-                    mana_cost: Some(updated_mana_costs),
-                    ..self.query
-                },
-            };
-        }
+    /// Include mana costs for searching.
+    pub fn with_mana_cost(self, mana_costs: Vec<u32>) -> Self {
+        match self.query.mana_costs {
+            None => {
+                let mut mana_costs = mana_costs.clone();
+                mana_costs.sort();
+                Self {
+                    query: CardSearchQuery {
+                        mana_costs: Some(mana_costs),
+                        ..self.query
+                    },
+                }
+            }
+            Some(existing_mana_costs) => {
+                let mut mana_costs = mana_costs.clone();
+                mana_costs.sort();
 
-        Self {
-            query: CardSearchQuery {
-                mana_cost: Some(mana_cost),
-                ..self.query
-            },
+                let mut updated_mana_costs = [mana_costs, existing_mana_costs].concat();
+                updated_mana_costs.sort();
+
+                Self {
+                    query: CardSearchQuery {
+                        mana_costs: Some(updated_mana_costs),
+                        ..self.query
+                    },
+                }
+            }
         }
     }
 
@@ -118,9 +127,11 @@ mod card_search_queries {
         let query_ok = query.is_ok();
         let query = query.unwrap();
 
+        dbg!(&query);
+
         // Assert
         assert!(query_ok);
-        assert_eq!(query.mana_cost, Some(expected));
+        assert_eq!(query.mana_costs, Some(expected));
     }
 
     #[test]
@@ -140,6 +151,26 @@ mod card_search_queries {
 
         // Assert
         assert!(query_ok);
-        assert_eq!(query.mana_cost, Some(expected));
+        assert_eq!(query.mana_costs, Some(expected));
+    }
+
+    #[test]
+    fn returns_ok_when_built_with_unsorted_lists_and_appended() {
+        // Arrange
+        let expected = vec![50, 100, 150, 200];
+        let builder = CardSearchQueryBuilder::new();
+
+        // Act
+        let query = builder
+            .with_mana_cost(vec![200, 50])
+            .with_mana_cost(vec![150, 100])
+            .build();
+
+        let query_ok = query.is_ok();
+        let query = query.unwrap();
+
+        // Assert
+        assert!(query_ok);
+        assert_eq!(query.mana_costs, Some(expected));
     }
 }
