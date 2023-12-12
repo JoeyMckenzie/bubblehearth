@@ -103,18 +103,28 @@ impl BubbleHearthClient {
 
     /// Constructs a new client instance with configurable options.
     pub fn new_with_options(options: BubbleHearthClientOptions) -> BubbleHearthResult<Self> {
-        let client = if let Some(timeout) = options.timeout {
-            reqwest::ClientBuilder::new()
-                .timeout(timeout)
-                .build()
-                .unwrap()
-        } else {
-            reqwest::ClientBuilder::new().build().unwrap()
-        };
-
         if !options.has_required_options() {
             return Err(BubbleHearthError::InvalidClientOptions);
         }
+
+        let client = match options.http {
+            // If we're not given any reqwest configurations,
+            // check to see which type of client should be built
+            None => match options.timeout {
+                // If no timeout was given, construct one with the default timeout
+                None => reqwest::ClientBuilder::new()
+                    .timeout(Duration::from_secs(DEFAULT_TIMEOUT_SECONDS.into()))
+                    .build()
+                    .unwrap(),
+                // If we have a configured timeout, use that instead
+                Some(timeout) => reqwest::ClientBuilder::new()
+                    .timeout(timeout)
+                    .build()
+                    .unwrap(),
+            },
+            // If we're given a preconfigured HTTP client, use that over all other configurations
+            Some(http) => http,
+        };
 
         Ok(Self {
             http: client,

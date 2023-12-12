@@ -16,7 +16,7 @@
 type BubbleHearthId = u32;
 
 mod auth;
-mod builder;
+pub mod builder;
 pub mod classic;
 pub mod client;
 mod connectors;

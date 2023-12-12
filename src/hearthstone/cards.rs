@@ -33,6 +33,7 @@ pub struct Card {
     pub slug: String,
     /// Class ID of the card.
     pub class_id: BubbleHearthId,
+    /// Available multi-class IDs of the card.
     pub multi_class_ids: Vec<BubbleHearthId>,
     pub spell_school_id: Option<BubbleHearthId>,
     pub card_type_id: BubbleHearthId,
