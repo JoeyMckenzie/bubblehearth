@@ -27,8 +27,11 @@ pub struct Cards {
 pub struct Card {
     /// ID of the card.
     pub id: BubbleHearthId,
+    /// ID of the card collectible.
     pub collectible: BubbleHearthId,
+    /// Slugified title of the card.
     pub slug: String,
+    /// Class ID of the card.
     pub class_id: BubbleHearthId,
     pub multi_class_ids: Vec<BubbleHearthId>,
     pub spell_school_id: Option<BubbleHearthId>,
@@ -43,7 +46,7 @@ pub struct Card {
     pub image_gold: String,
     pub flavor_text: String,
     pub crop_image: String,
-    pub keyword_ids: Vec<BubbleHearthId>,
+    pub keyword_ids: Option<Vec<BubbleHearthId>>,
     pub duels: Option<Duels>,
     pub copy_of_card_id: Option<BubbleHearthId>,
     pub health: Option<BubbleHearthId>,

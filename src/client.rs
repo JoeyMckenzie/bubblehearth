@@ -10,6 +10,7 @@ use serde::Deserialize;
 use time::OffsetDateTime;
 
 use crate::auth::AccessTokenResponse;
+use crate::builder::BubbleHearthClientOptions;
 use crate::classic::WorldOfWarcraftClassicConnector;
 use crate::connectors::ClientConnector;
 use crate::errors::{BubbleHearthError, BubbleHearthResult};
@@ -98,6 +99,32 @@ impl BubbleHearthClient {
             access_token: Mutex::new(None),
             expires_at: Mutex::new(OffsetDateTime::UNIX_EPOCH),
         }
+    }
+
+    /// Constructs a new client instance with configurable options.
+    pub fn new_with_options(options: BubbleHearthClientOptions) -> BubbleHearthResult<Self> {
+        let client = if let Some(timeout) = options.timeout {
+            reqwest::ClientBuilder::new()
+                .timeout(timeout)
+                .build()
+                .unwrap()
+        } else {
+            reqwest::ClientBuilder::new().build().unwrap()
+        };
+
+        if !options.has_required_options() {
+            return Err(BubbleHearthError::InvalidClientOptions);
+        }
+
+        Ok(Self {
+            http: client,
+            client_id: options.client_id.unwrap(),
+            client_secret: options.client_secret.unwrap(),
+            region: options.region.unwrap(),
+            locale: options.locale.unwrap(),
+            access_token: Mutex::new(None),
+            expires_at: Mutex::new(OffsetDateTime::UNIX_EPOCH),
+        })
     }
 
     /// Returns a mutable copy of the current access token. In the case a token refresh is required,

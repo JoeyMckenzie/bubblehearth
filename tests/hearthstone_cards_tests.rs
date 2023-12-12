@@ -1,4 +1,4 @@
-mod heathstone_cards_tests {
+mod hearthstone_cards_tests {
     use bubblehearth::client::BubbleHearthClient;
     use bubblehearth::localization::Locale;
     use bubblehearth::regionality::AccountRegion;

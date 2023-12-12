@@ -33,4 +33,10 @@ pub enum BubbleHearthError {
     /// Represents an error occurring when attempting construct queries.
     #[error("Query struct was not configured with any optional filters.")]
     SearchParametersNotProvided,
+    /// Represents an error when attempting to construct a client instance with any options.
+    #[error("The configured client is invalid and cannot be built in the current state.")]
+    InvalidClientOptions,
+    /// Represents an error when attempting to construct a client instance with any options.
+    #[error("One more required client options is missing.")]
+    InvalidClientOptionField,
 }
